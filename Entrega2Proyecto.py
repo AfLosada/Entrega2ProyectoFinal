@@ -17,12 +17,27 @@ os.system("clear")
 
 Model = ConcreteModel()
 
+numPaises = 3
+numObjetivos = 5
+numSexos = 3
+numIdiomas = 2
+numEdades = 6
+numNichos = 3
+numUbicaciones = 2
 
+## Sets: cada entero representa un pais
 paises = RangeSet(1,numPaises)
 objetivos = RangeSet(1,numObjetivos)
-sexos = Range(1,numSexos)
-idiomas = Range(1,numIdiomas)
-sexos = Range(1,numSexos)
-edad = Range(1,numEdades)
-nicho = Range(1,numNicho)
-ubicaciones = Range(1,numUbicaciones)
+sexos = RangeSet(1,numSexos)
+idiomas = RangeSet(1,numIdiomas)
+edades = RangeSet(1,numEdades)
+nichos = RangeSet(1,numNichos)
+ubicaciones = RangeSet(1,numUbicaciones)
+
+numeroHabitantes = Param(paises, mutable = True)
+costoObjetivo = Param(objetivos, mutable = True)
+porcentajeSexo = Param(sexos, mutable = True)
+porcentajeHablantes = Param(idiomas, mutable = True)
+porcentajeDentroNicho = Param(nichos, mutable = True)
+costoUbicacion = Param(ubicaciones, mutable = True)
+costoPorImpresion = Param(paises, mutable = True)
