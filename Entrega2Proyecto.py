@@ -24,6 +24,7 @@ numIdiomas = 2
 numEdades = 6
 numNichos = 3
 numUbicaciones = 2
+presupuesto = 100000 # El presupuesto del ususario
 
 # Sets: cada entero representa un pais
 Model.paises = RangeSet(1,numPaises)
@@ -40,19 +41,39 @@ Model.numeroHabitantes = Param(Model.paises, mutable = True)
 Model.costoObjetivo = Param(Model.objetivos, mutable = True)
 Model.porcentajeSexo = Param(Model.sexos, mutable = True)
 Model.porcentajeHablantes = Param(Model.idiomas, mutable = True)
-Model.porcentajeDentroNicho = Param(Model.nichos, mutable = True)
+Model.porcentajeDentroDeNicho = Param(Model.nichos, mutable = True)
 Model.costoUbicacion = Param(Model.ubicaciones, mutable = True)
 Model.costoPorImpresion = Param(Model.paises, mutable = True)
 
 #variables
 
-Model.objetivo = Var(Model.objetivos, domain=PositiveIntegers)
-Model.sexo = Var(Model.sexos, domain=PositiveIntegers)
-Model.idioma = Var(Model.idiomas, domain=PositiveIntegers)
-Model.nicho = Var(Model.nichos, domain=PositiveIntegers)
-Model.ubicacion = Var(Model.ubicaciones, domain=PositiveIntegers)
+Model.objetivo = Var(Model.objetivos, domain=Binary)
+Model.sexo = Var(Model.sexos, domain=Binary)
+Model.idioma = Var(Model.idiomas, domain=Binary)
+Model.nicho = Var(Model.nichos, domain=Binary)
+Model.ubicacion = Var(Model.ubicaciones, domain=Binary)
 
-Model.x = Var(Model.paises, domain=Binary)
-Model.y = Var(Model.sexos, domain=Binary)
+Model.x = Var(Model.paises, domain=Binary) # Elige o no el páis
 
-pob = sqrt(-Model.numeroHabitantes[p]*Model.x[p] for p  )
+def pob(p):
+    return sqrt(-1*Model.numeroHabitantes[p]*Model.x[p]*(22*(10**8)))
+
+def costos1(p, o, s): 
+    return Model.x[p] * Model.costoObjetivo[o] + Model.sexo[s]*Model.porcentajeSexo[s]
+
+def costos2(u, p):
+    return Model.costoUbicacion[u] * Model.ubicacion[u] + Model.costoPorImpresion[p]*Model.x[p]
+
+def porc1(i, n):
+    return Model.porcentajeHablantes(i)*Model.idioma[i] + Model.porcentajeDentroDeNicho[n]+Model.nicho[n]
+#Funcion Objetivo
+Model.objetivo = Objective(expr = sum( ((pob(p)*costos1(p,o,s)*costos2(u,p)*porc1(i,n))/presupuesto) for p in Model.paises for o in Model.objetivos for s in Model.sexos for u in Model.ubicaciones for i in Model.idiomas for n in Model.nichos ))
+
+#Constraints
+
+#Solver
+
+SolverFactory('glpk').solve(Model)
+
+Model.display()
+
