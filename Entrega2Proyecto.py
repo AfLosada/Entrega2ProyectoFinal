@@ -20,7 +20,7 @@ Model = ConcreteModel()
 
 numPaises = 3
 numObjetivos = 5
-numSexos = 3
+numSexos = 2
 numIdiomas = 2
 numEdades = 6
 numNichos = 2
@@ -100,12 +100,14 @@ def costos2(u, p):
 def porc1(i, n):
     return Model.porcentajeHablantes[i]*Model.idioma[i] + Model.porcentajeDentroDeNicho[n]+Model.nicho[n]
 #Funcion Objetivo
-Model.objetivo = Objective(expr = sum( ((pob(p)*costos1(p,o,s)*costos2(u,p)*porc1(i,n))/presupuesto) for p in Model.paises for o in Model.objetivos for s in Model.sexos for u in Model.ubicaciones for i in Model.idiomas for n in Model.nichos ))
+Model.func_objetivo = Objective(expr = sum( ((pob(p)*costos1(p,o,s)*costos2(u,p)*porc1(i,n))/presupuesto) for p in Model.paises for o in Model.objetivos for s in Model.sexos for u in Model.ubicaciones for i in Model.idiomas for n in Model.nichos ))
 
 #Constraints
 
+#Model.rest = Constraint(expr = sum(Model.objetivo[o] for o in Model.objetivos) == 1)
+
 #Solver
-SolverFactory('glpk').solve(Model)
+SolverFactory('mindtpy').solve(Model, mip_solver='glpk', nlp_solver='ipopt')
 
 
 Model.display()
