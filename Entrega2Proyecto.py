@@ -12,7 +12,6 @@ from pyomo.opt import SolverFactory
 
 import sys
 import os
-from math import sqrt
 
 os.system("clear")
 
@@ -89,7 +88,7 @@ Model.ubicacion = Var(Model.ubicaciones, domain=Binary)
 Model.x = Var(Model.paises, domain=Binary) # Elige o no el páis
 
 def pob(p):
-    return sqrt(-1*Model.numeroHabitantes[p]*Model.x[p]*(22*(10**8)))
+    return Model.numeroHabitantes[p]*Model.x[p]*(22*(10**8))
 
 def costos1(p, o, s): 
     return Model.x[p] * Model.costoObjetivo[o] + Model.sexo[s]*Model.porcentajeSexo[s]
@@ -104,7 +103,7 @@ Model.func_objetivo = Objective(expr = sum( ((pob(p)*costos1(p,o,s)*costos2(u,p)
 
 #Constraints
 
-#Model.rest = Constraint(expr = sum(Model.objetivo[o] for o in Model.objetivos) == 1)
+Model.rest = Constraint(expr = sum(Model.objetivo[o] for o in Model.objetivos) == 1)
 
 #Solver
 SolverFactory('mindtpy').solve(Model, mip_solver='glpk', nlp_solver='ipopt')
