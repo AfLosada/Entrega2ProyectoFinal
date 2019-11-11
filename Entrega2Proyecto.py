@@ -88,7 +88,7 @@ Model.ubicacion = Var(Model.ubicaciones, domain=Binary)
 Model.x = Var(Model.paises, domain=Binary) # Elige o no el páis
 
 def pob(p):
-    return Model.numeroHabitantes[p]*Model.x[p]*(22*(10**8))
+    return -1*Model.numeroHabitantes[p]*Model.x[p]+(22*(10**8))
 
 def costos1(p, o, s): 
     return Model.x[p] * Model.costoObjetivo[o] + Model.sexo[s]*Model.porcentajeSexo[s]
@@ -99,14 +99,20 @@ def costos2(u, p):
 def porc1(i, n):
     return Model.porcentajeHablantes[i]*Model.idioma[i] + Model.porcentajeDentroDeNicho[n]+Model.nicho[n]
 #Funcion Objetivo
-Model.func_objetivo = Objective(expr = sum( ((pob(p)*costos1(p,o,s)*costos2(u,p)*porc1(i,n))/presupuesto) for p in Model.paises for o in Model.objetivos for s in Model.sexos for u in Model.ubicaciones for i in Model.idiomas for n in Model.nichos ))
+Model.func_objetivo = Objective(expr = sum( ((pob(p)*costos1(p,o,s)*costos2(u,p)*porc1(i,n))/presupuesto) for p in Model.paises for o in Model.objetivos for s in Model.sexos for u in Model.ubicaciones for i in Model.idiomas for n in Model.nichos ), sense=minimize)
 
 #Constraints
 
-Model.rest = Constraint(expr = sum(Model.objetivo[o] for o in Model.objetivos) == 1)
+Model.canObjetivos = Constraint(expr = sum(Model.objetivo[o] for o in Model.objetivos) == 1)
+Model.canSexos = Constraint(expr = sum(Model.sexo[s] for s in Model.sexos) <= 2)
+Model.canIdiomas = Constraint(expr = sum(Model.idioma[i] for i in Model.idiomas) >= 1)
+Model.canNicho = Constraint(expr = sum(Model.nicho[n] for n in Model.nichos) >= 1)
+Model.canUbicacion = Constraint(expr = sum(Model.ubicacion[u] for u in Model.ubicaciones) == 1)
+Model.canPaises = Constraint(expr = sum(Model.x[p] for p in Model.paises) == 1)
 
 #Solver
-SolverFactory('mindtpy').solve(Model, mip_solver='glpk', nlp_solver='ipopt')
+solver = SolverFactory('mindtpy')   
+solver.solve(Model, mip_solver='glpk', nlp_solver='ipopt')
 
 
 Model.display()
