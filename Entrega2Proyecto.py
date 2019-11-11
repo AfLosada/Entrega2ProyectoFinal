@@ -12,7 +12,7 @@ from pyomo.opt import SolverFactory
 
 import sys
 import os
-import math
+from math import sqrt
 
 os.system("clear")
 
