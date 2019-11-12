@@ -24,7 +24,7 @@ numIdiomas = 2
 numEdades = 6
 numNichos = 2
 numUbicaciones = 2
-presupuesto = 100000 # El presupuesto del ususario
+presupuesto = 100 # El presupuesto del ususario
 
 # Sets: cada entero representa un pais
 Model.paises = RangeSet(1,numPaises)
@@ -50,11 +50,11 @@ Model.numeroHabitantes[2] = 230000000 #E.E.U.U.
 Model.numeroHabitantes[3] = 44000000  #UK
 
 #Costo Objetivos
-Model.costoObjetivo[1] = 1   #Trafico
-Model.costoObjetivo[2] = 0.3 #Brand Awareness
-Model.costoObjetivo[3] = 0.8 #Traffic
-Model.costoObjetivo[4] = 1.4 #Lead Generation
-Model.costoObjetivo[5] = 2   #Conversions
+Model.costoObjetivo[1] = 0.7   #Engagement
+Model.costoObjetivo[2] = 1   #Brand Awareness
+Model.costoObjetivo[3] = 0.6 #Traffic
+Model.costoObjetivo[4] = 0.2 #Lead Generation
+Model.costoObjetivo[5] = 0.1   #Conversions
 
 #Porcentaje de Cada Sexo con Facebook
 Model.porcentajeSexo[1] = 0.62
@@ -73,8 +73,8 @@ Model.costoUbicacion[1] = 20/1000 #Facebook
 Model.costoUbicacion[2] = 28/1000 #Instagram
 
 #Costo por Impresion en dolares
-Model.costoPorImpresion[1] = 1/1000 #Colombia
-Model.costoPorImpresion[2] = 33/1000 #E.E.U.U.
+Model.costoPorImpresion[1] = 66/1000 #Colombia
+Model.costoPorImpresion[2] = 1/1000 #E.E.U.U.
 Model.costoPorImpresion[3] = 11.55/1000 #UK
 
 #variables
@@ -87,33 +87,38 @@ Model.ubicacion = Var(Model.ubicaciones, domain=Binary)
 
 Model.x = Var(Model.paises, domain=Binary) # Elige o no el páis
 
-def pob(p):
-    return -1*Model.numeroHabitantes[p]*Model.x[p]+(22*(10**8))
+def poblacion(p, s, i, n):
+    return (Model.numeroHabitantes[p]*Model.x[p])  * porcOyS(s) * porcHyN(i,n)
 
-def costos1(p, o, s): 
-    return Model.x[p] * Model.costoObjetivo[o] + Model.sexo[s]*Model.porcentajeSexo[s]
 
-def costos2(u, p):
-    return Model.costoUbicacion[u] * Model.ubicacion[u] + Model.costoPorImpresion[p]*Model.x[p]
+def porcOyS(s): 
+    return Model.sexo[s]*Model.porcentajeSexo[s]
 
-def porc1(i, n):
-    return Model.porcentajeHablantes[i]*Model.idioma[i] + Model.porcentajeDentroDeNicho[n]+Model.nicho[n]
+def costosPorPersona(u, o, p):
+    return Model.costoUbicacion[u] * Model.ubicacion[u] + Model.costoPorImpresion[p] * Model.x[p] + Model.costoObjetivo[o] * Model.objetivo[o]
+
+def porcHyN(i, n):
+    return Model.porcentajeHablantes[i] * Model.idioma[i] * Model.porcentajeDentroDeNicho[n] * Model.nicho[n]
 #Funcion Objetivo
-Model.func_objetivo = Objective(expr = sum( ((pob(p)*costos1(p,o,s)*costos2(u,p)*porc1(i,n))/presupuesto) for p in Model.paises for o in Model.objetivos for s in Model.sexos for u in Model.ubicaciones for i in Model.idiomas for n in Model.nichos ), sense=minimize)
+Model.func_objetivo = Objective(expr = sum( Model.numeroHabitantes[p]*Model.x[p] * porcOyS(s) * porcHyN(i,n) * presupuesto * Model.costoPorImpresion[p]*Model.x[p] * (Model.costoObjetivo[o] * Model.objetivo[o]) * (Model.costoUbicacion[u] * Model.ubicacion[u])  for p in Model.paises for s in Model.sexos for i in Model.idiomas for n in Model.nichos for o in Model.objetivos for u in Model.ubicaciones), sense=maximize)
 
 #Constraints
 
 Model.canObjetivos = Constraint(expr = sum(Model.objetivo[o] for o in Model.objetivos) == 1)
-Model.canSexos = Constraint(expr = sum(Model.sexo[s] for s in Model.sexos) <= 2)
-Model.canIdiomas = Constraint(expr = sum(Model.idioma[i] for i in Model.idiomas) >= 1)
-Model.canNicho = Constraint(expr = sum(Model.nicho[n] for n in Model.nichos) >= 1)
+Model.canSexos = Constraint(expr = sum(Model.sexo[s] for s in Model.sexos) == 1)
+Model.canIdiomas = Constraint(expr = sum(Model.idioma[i] for i in Model.idiomas) == 1)
+Model.canNicho = Constraint(expr = sum(Model.nicho[n] for n in Model.nichos) == 1)
 Model.canUbicacion = Constraint(expr = sum(Model.ubicacion[u] for u in Model.ubicaciones) == 1)
 Model.canPaises = Constraint(expr = sum(Model.x[p] for p in Model.paises) == 1)
 
+
+
 #Solver
-solver = SolverFactory('mindtpy')   
-solver.solve(Model, mip_solver='glpk', nlp_solver='ipopt')
+solver = SolverFactory('ipopt')
+solver.options['max_iter']= 10000 #number of iterations you wish
+solver.solve(Model)
 
 
 Model.display()
+
 
