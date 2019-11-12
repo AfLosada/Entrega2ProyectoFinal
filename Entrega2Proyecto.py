@@ -24,7 +24,7 @@ numIdiomas = 2
 numEdades = 6
 numNichos = 2
 numUbicaciones = 2
-presupuesto = 100 # El presupuesto del ususario
+presupuesto = 200 # El presupuesto del ususario
 
 # Sets: cada entero representa un pais
 Model.paises = RangeSet(1,numPaises)
@@ -88,19 +88,18 @@ Model.ubicacion = Var(Model.ubicaciones, domain=Binary)
 Model.x = Var(Model.paises, domain=Binary) # Elige o no el páis
 
 def poblacion(p, s, i, n):
-    return (Model.numeroHabitantes[p]*Model.x[p])  * porcOyS(s) * porcHyN(i,n)
+    return (Model.numeroHabitantes[p]*Model.x[p])  * porcS(s) * porcIyN(i,n)
 
-
-def porcOyS(s): 
+def porcS(s): 
     return Model.sexo[s]*Model.porcentajeSexo[s]
 
 def costosPorPersona(u, o, p):
-    return Model.costoUbicacion[u] * Model.ubicacion[u] + Model.costoPorImpresion[p] * Model.x[p] + Model.costoObjetivo[o] * Model.objetivo[o]
+    return Model.costoPorImpresion[p]*Model.x[p] * (Model.costoObjetivo[o] * Model.objetivo[o]) * (Model.costoUbicacion[u] * Model.ubicacion[u])
 
-def porcHyN(i, n):
+def porcIyN(i, n):
     return Model.porcentajeHablantes[i] * Model.idioma[i] * Model.porcentajeDentroDeNicho[n] * Model.nicho[n]
 #Funcion Objetivo
-Model.func_objetivo = Objective(expr = sum( Model.numeroHabitantes[p]*Model.x[p] * porcOyS(s) * porcHyN(i,n) * presupuesto * Model.costoPorImpresion[p]*Model.x[p] * (Model.costoObjetivo[o] * Model.objetivo[o]) * (Model.costoUbicacion[u] * Model.ubicacion[u])  for p in Model.paises for s in Model.sexos for i in Model.idiomas for n in Model.nichos for o in Model.objetivos for u in Model.ubicaciones), sense=maximize)
+Model.func_objetivo = Objective(expr = sum( poblacion(p,s,i,n) * presupuesto * costosPorPersona(u,o,p) for p in Model.paises for s in Model.sexos for i in Model.idiomas for n in Model.nichos for o in Model.objetivos for u in Model.ubicaciones), sense=maximize)
 
 #Constraints
 
