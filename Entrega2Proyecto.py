@@ -75,7 +75,7 @@ Model.costoUbicacion[2] = 28/1000 #Instagram
 #Costo por Impresion en dolares
 Model.costoPorImpresion[1] = 66/1000 #Colombia
 Model.costoPorImpresion[2] = 1/1000 #E.E.U.U.
-Model.costoPorImpresion[3] = 11.55/1000 #UK
+Model.costoPorImpresion[3] = 10/1000 #UK
 
 #variables
 
@@ -93,23 +93,24 @@ def poblacion(p, s, i, n):
 def porcS(s): 
     return Model.sexo[s]*Model.porcentajeSexo[s]
 
-def costosPorPersona(u, o, p):
+def costosExtra(u, o, p):
     return Model.costoPorImpresion[p]*Model.x[p] * (Model.costoObjetivo[o] * Model.objetivo[o]) * (Model.costoUbicacion[u] * Model.ubicacion[u])
 
 def porcIyN(i, n):
     return Model.porcentajeHablantes[i] * Model.idioma[i] * Model.porcentajeDentroDeNicho[n] * Model.nicho[n]
 #Funcion Objetivo
-Model.func_objetivo = Objective(expr = sum( poblacion(p,s,i,n) * presupuesto * costosPorPersona(u,o,p) for p in Model.paises for s in Model.sexos for i in Model.idiomas for n in Model.nichos for o in Model.objetivos for u in Model.ubicaciones), sense=maximize)
+Model.func_objetivo = Objective(expr = sum( poblacion(p,s,i,n) * presupuesto * costosExtra(u,o,p) for p in Model.paises for s in Model.sexos for i in Model.idiomas for n in Model.nichos for o in Model.objetivos for u in Model.ubicaciones), sense=maximize)
 
 #Constraints
 
 Model.canObjetivos = Constraint(expr = sum(Model.objetivo[o] for o in Model.objetivos) == 1)
-Model.canSexos = Constraint(expr = sum(Model.sexo[s] for s in Model.sexos) == 1)
+Model.canSexos = Constraint(expr = sum(Model.sexo[s] for s in Model.sexos) <= 2)
 Model.canIdiomas = Constraint(expr = sum(Model.idioma[i] for i in Model.idiomas) == 1)
-Model.canNicho = Constraint(expr = sum(Model.nicho[n] for n in Model.nichos) == 1)
+Model.canNicho = Constraint(expr = sum(Model.nicho[n] for n in Model.nichos) <= 2)
 Model.canUbicacion = Constraint(expr = sum(Model.ubicacion[u] for u in Model.ubicaciones) == 1)
-Model.canPaises = Constraint(expr = sum(Model.x[p] for p in Model.paises) == 1)
+Model.canPaises = Constraint(expr = sum(Model.x[p] for p in Model.paises) >= 1)
 
+Model.elegirEEUU = Constraint(expr = Model.x[2] == 1)
 
 
 #Solver
